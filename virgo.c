@@ -38,6 +38,7 @@ typedef struct {
 	unsigned current;
 	unsigned handle_hotkeys;
 	Windows desktops[NUM_DESKTOPS];
+	HWND focused[NUM_DESKTOPS];
 	Trayicon trayicon;
 } Virgo;
 
@@ -234,7 +235,7 @@ static void virgo_toggle_hotkeys(Virgo *v)
 	if (v->handle_hotkeys) {
 		for (i = 0; i < NUM_DESKTOPS; i++) {
 			register_hotkey(i * 2, MOD_ALT | MOD_NOREPEAT, i + 1 + '0');
-			register_hotkey(i * 2 + 1, MOD_CONTROL | MOD_NOREPEAT, i + 1 + '0');
+			register_hotkey(i * 2 + 1, MOD_ALT | MOD_SHIFT | MOD_NOREPEAT, i + 1 + '0');
 		}
 	} else {
 		for (i = 0; i < NUM_DESKTOPS; i++) {
@@ -250,7 +251,7 @@ static void virgo_init(Virgo *v)
 	v->handle_hotkeys = 1;
 	for (i = 0; i < NUM_DESKTOPS; i++) {
 		register_hotkey(i * 2, MOD_ALT | MOD_NOREPEAT, i + 1 + '0');
-		register_hotkey(i * 2 + 1, MOD_CONTROL | MOD_NOREPEAT, i + 1 + '0');
+		register_hotkey(i * 2 + 1, MOD_ALT | MOD_SHIFT | MOD_NOREPEAT, i + 1 + '0');
 	}
 	register_hotkey(i * 2, MOD_ALT | MOD_CONTROL | MOD_SHIFT | MOD_NOREPEAT,
 					'Q');
@@ -291,8 +292,10 @@ static void virgo_go_to_desk(Virgo *v, unsigned desk)
 		return;
 	}
 	virgo_update(v);
+	v->focused[v->current] = GetForegroundWindow();
 	windows_hide(&v->desktops[v->current]);
 	windows_show(&v->desktops[desk]);
+	SetForegroundWindow(v->focused[desk]);
 	v->current = desk;
 	trayicon_set(&v->trayicon, v->current + 1);
 }
